@@ -1,0 +1,9 @@
+a576dd16c95b836faf41bca1faad5f16  usr/bin/gnome-shell-google-calendar
+c8703bde4a8eff0e8e8e0ce9be8ed430  usr/share/doc/gnome-shell-google-calendar/README
+8a4216aee68712c286978c5cee118f29  usr/share/doc/gnome-shell-google-calendar/README.Debian
+cb50fa14b6d849e412bdf16717dfb84c  usr/share/doc/gnome-shell-google-calendar/changelog.gz
+dddb044432c18fd330bc1d7dcf0add82  usr/share/doc/gnome-shell-google-calendar/copyright
+d41d8cd98f00b204e9800998ecf8427e  usr/share/pyshared/gnome_shell_google_calendar/__init__.py
+d41d8cd98f00b204e9800998ecf8427e  usr/share/pyshared/gnome_shell_google_calendar/keyring/__init__.py
+809481cef7bc29ce2515947be16d91bc  usr/share/pyshared/gnome_shell_google_calendar/keyring/keyring.py
+7ebab83e6e5d8bb44676f50cae218978  usr/share/python-support/gnome-shell-google-calendar.public

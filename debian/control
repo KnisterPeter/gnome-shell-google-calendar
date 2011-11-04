@@ -1,0 +1,15 @@
+Source: gnome-shell-google-calendar
+Section: unknown
+Priority: extra
+Maintainer: Markus Wolf <mail@markus-wolf.de>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.2
+Homepage: https://github.com/KnisterPeter/gnome-shell-google-calendar
+#Vcs-Git: git://git.debian.org/collab-maint/gnome-shell-google-calendar.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/gnome-shell-google-calendar.git;a=summary
+
+Package: gnome-shell-google-calendar
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}, python-dbus, python-gdata, python-gnomekeyring
+Description: <insert up to 60 chars description>
+ <insert long description, indented with spaces>

@@ -13,7 +13,6 @@ _item_id = None
 class KeyringError(Exception):
     pass
 
-
 def get_item_id():
     global _item_id
     

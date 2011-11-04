@@ -4,14 +4,16 @@ from datetime import datetime, timedelta
 from getpass import getpass
 from threading import Thread
 from time import mktime, sleep
+import syslog
+from syslog import *
 
 from gdata.calendar.service import CalendarService, CalendarEventQuery
+import gobject
 import dbus
 import dbus.mainloop.glib
 import dbus.service
-import gtk
 import iso8601
-import keyring
+from gnome_shell_google_calendar.keyring import keyring
 
 
 def get_month_key(date, first_day_of_week=7):
@@ -129,7 +131,7 @@ class CalendarServer(dbus.service.Object):
         self.months = {}
 
         # Make threading work
-        gtk.gdk.threads_init()
+        gobject.threads_init()
 
         # Thread used to fetch events in background
         self.updater = Thread()
@@ -143,22 +145,22 @@ class CalendarServer(dbus.service.Object):
     def scheduler(self, timeout):
         while 1:
             sleep(timeout.seconds)
-            print 'Checking if actual month events need update...'
+            syslog('Checking if actual month events need update...')
             if self.months[get_month_key(datetime.now())].\
                     needs_update(timedelta(minutes=2)):
                 while self.updater.is_alive():
                     sleep(1)
-                    print 'Scheduler waiting for updater thread to end...'
+                    syslog('Scheduler waiting for updater thread to end...')
                 if self.months[get_month_key(datetime.now())].\
                         needs_update(timedelta(minutes=2)):
-                    print 'Scheduler starts updater thread...'
+                    syslog('Scheduler starts updater thread...')
                     self.updater = Thread(target=self.update_months_events,
                                         args=(datetime.now(), True))
                     self.updater.start()
                 else:
-                    print 'Updater thread updated actual month'
+                    syslog('Updater thread updated actual month')
             else:
-                print 'No need for update'
+                syslog('No need for update')
 
     def get_calendars(self):
         feed = self.client.GetAllCalendarsFeed()
@@ -166,14 +168,14 @@ class CalendarServer(dbus.service.Object):
         calendars = []
         urls = set()
 
-        print feed.title.text + ':'
+        syslog("%s:" % (feed.title.text))
 
         for calendar in feed.entry:
             title = calendar.title.text
             url = calendar.content.src
 
             if not url in urls:
-                print '  ', title
+                syslog('  %s' % title)
 #                print '    ', url
                 urls.add(url)
                 calendars.append((title, url))
@@ -201,9 +203,7 @@ class CalendarServer(dbus.service.Object):
         else:
             prefix = '    '
 
-        print prefix, 'Update months events around:',\
-                probe_date.strftime('%B %Y'), '| months_back', months_back,\
-                '| months_ahead', months_ahead
+        syslog('%sUpdate months events around:%s| months_back%s| months_ahead%s' % (prefix, probe_date.strftime('%B %Y'), months_back, months_ahead))
 
         months = {}
 
@@ -228,7 +228,7 @@ class CalendarServer(dbus.service.Object):
 
         # Get events from all calendars
         for calendar, feed_url in self.calendars:
-            print prefix, 'Getting events from', calendar, '...'
+            syslog('%sGetting events from%s...' % (prefix, calendar))
 
             query = CalendarEventQuery()
             query.feed = feed_url
@@ -264,9 +264,7 @@ class CalendarServer(dbus.service.Object):
 #            del self.months[key]
             self.months[key] = month
 
-        print prefix, '#Updated events since', \
-                (min_date + timedelta(days=10)).strftime('%B %Y'), \
-                'until', (max_date - timedelta(days=10)).strftime('%B %Y')
+        syslog('%s#Updated events since%suntil%s' % (prefix, (min_date + timedelta(days=10)).strftime('%B %Y'), (max_date - timedelta(days=10)).strftime('%B %Y')))
 
     def need_update_near(self, _key, months_back=6, months_ahead=6):
         """Check if months around month declared by `key` need update or not
@@ -308,34 +306,33 @@ class CalendarServer(dbus.service.Object):
         until = int(until)
         force_reload = bool(force_reload)
 
-        print "\nGetEvents(since=%s, until=%s, force_reload=%s)" % \
-                (since, until, force_reload)
+        syslog("GetEvents(since=%s, until=%s, force_reload=%s)" % (since, until, force_reload))
 
         probe_date = datetime.fromtimestamp(since) + timedelta(days=10)
 
-        print '  Getting events for:', probe_date.strftime('%B %Y')
+        syslog('  Getting events for:%s' % (probe_date.strftime('%B %Y')))
 
         key = get_month_key(probe_date)
 
         if not key in self.months:
-            print '  Month not yet downloaded'
+            syslog('  Month not yet downloaded')
             while self.updater.is_alive():
-                print '  Waiting for updater thread to end...'
+                syslog('  Waiting for updater thread to end...')
                 sleep(1)
             if not key in self.months:
-                print '  Updating...'
+                syslog('  Updating...')
                 self.update_months_events(probe_date)
             else:
-                print '  Month was downloaded by thread'
+                syslog('  Month was downloaded by thread')
         elif (not self.updater.is_alive()) and self.need_update_near(key):
-            print '  Old cache. Starting updater thread...'
+            syslog('  Old cache. Starting updater thread...')
             self.updater = Thread(target=self.update_months_events,
                                     args=(probe_date, True))
             self.updater.start()
         else:
-            print '  Data loaded form cache'
+            syslog('  Data loaded form cache')
 
-        print ' #Returning', len(self.months[key].gnome_events), 'events...'
+        syslog(' #Returning%sevents...' % (len(self.months[key].gnome_events)))
 
         return self.months[key].gnome_events
 
@@ -360,6 +357,9 @@ def login_prompt():
 
 
 if __name__ == '__main__':
+    # initialize logging
+    openlog('gnome-shell-google-calendar', LOG_PID, LOG_USER)
+
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
     # Get credentials
@@ -373,12 +373,13 @@ if __name__ == '__main__':
     client = None
     while not client:
         try:
-            print "Logging in as '%s'..." % email
+            syslog("Logging in as '%s'..." % email)
             client = login(email, password)
         except Exception as e:
-            print '%s.' % e
+            syslog('%s.' % e)
             email, password = login_prompt()
             keyring.set_credentials(email, password)
 
     myserver = CalendarServer(client)
-    gtk.main()
+    gobject.MainLoop().run()
+
