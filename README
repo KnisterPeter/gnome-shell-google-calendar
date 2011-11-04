@@ -34,4 +34,14 @@
       
       Add settings GUI
       Add setup script
+      Maybe use Gnome Online Application settings instead of keyring
+
+    ~ Install
+  
+      Execute dpkg-buildpackage
+      Then execute sudo dpkg -i ../gnome-shell-google-calendar_0.0.1_all.deb
+      After installation start gnome-shell-google-calendar on the commandline 
+      and enter your credentials (this is only required the fist time)
+      Create a startup application entry for gnome-shell-google-calendar and
+      have fun.
 
