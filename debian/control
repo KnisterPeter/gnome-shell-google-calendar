@@ -10,6 +10,6 @@ Homepage: https://github.com/KnisterPeter/gnome-shell-google-calendar
 
 Package: gnome-shell-google-calendar
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-dbus, python-gdata, python-gnomekeyring
+Depends: ${python:Depends}, ${misc:Depends}, python-dbus, python-gdata, python-gnomekeyring, python-iso8601
 Description: <insert up to 60 chars description>
  <insert long description, indented with spaces>
